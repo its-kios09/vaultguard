@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id            String   @id @default(cuid())
+  name          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  auditLogs     AuditLog[]
+  scopePolicies ScopePolicy[]
+  connections   TenantConnection[]
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  timestamp       DateTime @default(now())
+  tenantId        String
+  agentId         String
+  userId          String?
+  action          String
+  connection      String
+  scopesRequested String[]
+  scopesGranted   String[]
+  stepUpRequired  Boolean  @default(false)
+  success         Boolean
+  errorCode       String?
+  metadata        Json?
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  @@index([tenantId])
+  @@index([tenantId, timestamp])
+  @@index([action])
+}
+
+model ScopePolicy {
+  id         String   @id @default(cuid())
+  tenantId   String
+  connection String
+  scopes     String[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  @@unique([tenantId, connection])
+  @@index([tenantId])
+}
+
+model TenantConnection {
+  id             String    @id @default(cuid())
+  tenantId       String
+  provider       String
+  status         String    @default("disconnected")
+  scopesGranted  String[]
+  connectedAt    DateTime?
+  lastUsedAt     DateTime?
+  tokenExpiresAt DateTime?
+  usageCount     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tenant         Tenant    @relation(fields: [tenantId], references: [id])
+  @@unique([tenantId, provider])
+  @@index([tenantId])
+}
