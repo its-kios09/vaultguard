@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { auth0 } from "@/lib/auth0";
+import { prisma } from "@/lib/prisma";
 import {
   Card,
   CardHeader,
@@ -7,51 +9,64 @@ import {
   PageHeader,
   ScopeTag,
   StatusBadge,
-  SectionLabel,
 } from "@/components/ui";
 
-const METRICS = [
-  { label: "Vault Requests",      value: "1,284", delta: "+24 today",              color: "purple" as const },
-  { label: "Tokens Granted",      value: "1,271", delta: "98.9% success rate",     color: "green"  as const },
-  { label: "Threats Blocked",     value: "13",    delta: "cross-tenant attempts",  color: "red"    as const },
-  { label: "Active Connections",  value: "3",     delta: "Google · Slack · GitHub" },
-];
-
-const CONNECTIONS = [
-  { icon: "🗓", name: "Google Calendar", scopes: "calendar.events.write · calendar.readonly", status: "connected"    as const },
-  { icon: "💬", name: "Slack",           scopes: "chat:write · channels:read",                status: "connected"    as const },
-  { icon: "🐙", name: "GitHub",          scopes: "repo · pull_requests",                      status: "connected"    as const },
-  { icon: "✉️", name: "Gmail",           scopes: "gmail.send",                                status: "pending"      as const },
-];
-
-const POLICIES = [
-  { conn: "Google Calendar", scopes: ["events.write", "readonly"] },
-  { conn: "Slack",           scopes: ["chat:write", "channels:read"] },
-  { conn: "GitHub",          scopes: ["repo", "pr:read"] },
-  { conn: "Gmail",           scopes: ["send"] },
-];
-
-const AUDIT_EVENTS = [
-  { dot: "success", action: "VAULT_TOKEN_GRANTED",  meta: "google-oauth2 · calendar.events.write", time: "2s ago"  },
-  { dot: "success", action: "VAULT_TOKEN_GRANTED",  meta: "slack · chat:write",                    time: "14s ago" },
-  { dot: "stepup",  action: "STEP_UP_INITIATED",    meta: "github · repo · high-stakes action",    time: "1m ago"  },
-  { dot: "denied",  action: "VAULT_TOKEN_DENIED",   meta: "POLICY_VIOLATION · gmail.delete",       time: "3m ago"  },
-  { dot: "denied",  action: "CROSS_TENANT_ATTEMPT", meta: "agent tried tenant-002 vault",          time: "8m ago"  },
-];
-
-const THREATS = [
-  { title: "Cross-tenant vault attempt blocked",   desc: "agent-id:ollama-local · tried accessing tenant-002 google-oauth2 token · blocked at SDK layer", time: "8m ago"  },
-  { title: "Policy violation — scope denied",      desc: "agent requested gmail.delete · not in tenant allow-list · request rejected",                    time: "3m ago"  },
-  { title: "Step-up auth timeout",                 desc: "user did not approve github repo access within 60s · action cancelled",                         time: "12m ago" },
-];
-
 const DOT_COLORS: Record<string, string> = {
-  success: "var(--accent-green)",
-  denied:  "var(--accent-red)",
-  stepup:  "var(--accent-amber)",
+  VAULT_TOKEN_GRANTED:  "var(--accent-green)",
+  VAULT_TOKEN_DENIED:   "var(--accent-red)",
+  STEP_UP_INITIATED:    "var(--accent-amber)",
+  STEP_UP_APPROVED:     "var(--accent-green)",
+  CROSS_TENANT_ATTEMPT: "var(--accent-red)",
 };
 
-export default function DashboardPage() {
+const CONNECTION_ICONS: Record<string, string> = {
+  "google-oauth2": "🗓",
+  slack:           "💬",
+  github:          "🐙",
+  gmail:           "✉️",
+  spotify:         "🎵",
+  notion:          "📝",
+};
+
+function timeAgo(iso: string) {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  return `${Math.floor(diff / 3600)}h ago`;
+}
+
+export default async function DashboardPage() {
+  const session = await auth0.getSession();
+  const tenantId = "demo-001";
+
+  const [
+    totalRequests,
+    tokensGranted,
+    threatsBlocked,
+    activeConnections,
+    recentAudit,
+    connections,
+    policies,
+  ] = await Promise.all([
+    prisma.auditLog.count({ where: { tenantId } }),
+    prisma.auditLog.count({ where: { tenantId, action: "VAULT_TOKEN_GRANTED", success: true } }),
+    prisma.auditLog.count({ where: { tenantId, action: { in: ["CROSS_TENANT_ATTEMPT", "VAULT_TOKEN_DENIED"] } } }),
+    prisma.tenantConnection.count({ where: { tenantId, status: "connected" } }),
+    prisma.auditLog.findMany({ where: { tenantId }, orderBy: { timestamp: "desc" }, take: 5 }),
+    prisma.tenantConnection.findMany({ where: { tenantId }, orderBy: { provider: "asc" } }),
+    prisma.scopePolicy.findMany({ where: { tenantId }, orderBy: { connection: "asc" } }),
+  ]);
+
+  const successRate = totalRequests > 0
+    ? ((tokensGranted / totalRequests) * 100).toFixed(1)
+    : "0.0";
+
+  const threats = await prisma.auditLog.findMany({
+    where: { tenantId, action: { in: ["CROSS_TENANT_ATTEMPT", "VAULT_TOKEN_DENIED", "POLICY_VIOLATION"] } },
+    orderBy: { timestamp: "desc" },
+    take: 3,
+  });
+
   return (
     <>
       <style>{`
@@ -80,14 +95,34 @@ export default function DashboardPage() {
 
       <PageHeader
         title="Overview"
-        subtitle="Tenant DEMO-001 · Auth0 Token Vault · VaultGuard SDK v0.1.0"
+        subtitle={`${session?.user.email} · Auth0 Token Vault · VaultGuard SDK v0.1.0`}
       />
 
-      {/* Metrics */}
+      {/* Metrics from real DB */}
       <div className="grid-4" style={{ marginBottom: "32px" }}>
-        {METRICS.map((m) => (
-          <MetricCard key={m.label} {...m} />
-        ))}
+        <MetricCard
+          label="Vault Requests"
+          value={totalRequests.toLocaleString()}
+          delta="total requests"
+          color="purple"
+        />
+        <MetricCard
+          label="Tokens Granted"
+          value={tokensGranted.toLocaleString()}
+          delta={`${successRate}% success rate`}
+          color="green"
+        />
+        <MetricCard
+          label="Threats Blocked"
+          value={threatsBlocked.toLocaleString()}
+          delta="cross-tenant attempts"
+          color="red"
+        />
+        <MetricCard
+          label="Active Connections"
+          value={activeConnections.toLocaleString()}
+          delta={connections.filter(c => c.status === "connected").map(c => c.provider).join(" · ")}
+        />
       </div>
 
       {/* Row 1 */}
@@ -98,16 +133,18 @@ export default function DashboardPage() {
             action={<Link href="/dashboard/connections" className="card-action">Manage →</Link>}
           />
           <CardBody>
-            {CONNECTIONS.map((c) => (
-              <div className="conn-item" key={c.name}>
+            {connections.map((c) => (
+              <div className="conn-item" key={c.id}>
                 <div className="conn-left">
-                  <div className="conn-icon">{c.icon}</div>
+                  <div className="conn-icon">{CONNECTION_ICONS[c.provider] ?? "🔗"}</div>
                   <div>
-                    <div className="conn-name">{c.name}</div>
-                    <div className="conn-scopes-text">{c.scopes}</div>
+                    <div className="conn-name">{c.provider}</div>
+                    <div className="conn-scopes-text">
+                      {c.scopesGranted.join(" · ") || "no scopes"}
+                    </div>
                   </div>
                 </div>
-                <StatusBadge status={c.status} />
+                <StatusBadge status={c.status as "connected" | "disconnected" | "connecting" | "pending"} />
               </div>
             ))}
           </CardBody>
@@ -119,9 +156,9 @@ export default function DashboardPage() {
             action={<Link href="/dashboard/policy" className="card-action">Edit →</Link>}
           />
           <CardBody>
-            {POLICIES.map((p) => (
-              <div className="policy-row" key={p.conn}>
-                <div className="policy-conn">{p.conn}</div>
+            {policies.map((p) => (
+              <div className="policy-row" key={p.id}>
+                <div className="policy-conn">{p.connection}</div>
                 <div className="policy-scopes">
                   {p.scopes.map((s) => <ScopeTag key={s} scope={s} />)}
                 </div>
@@ -139,14 +176,20 @@ export default function DashboardPage() {
             action={<Link href="/dashboard/audit" className="card-action">View all →</Link>}
           />
           <CardBody>
-            {AUDIT_EVENTS.map((a, i) => (
-              <div className="audit-item" key={i}>
-                <div className="audit-dot" style={{ background: DOT_COLORS[a.dot] }} />
+            {recentAudit.map((a) => (
+              <div className="audit-item" key={a.id}>
+                <div
+                  className="audit-dot"
+                  style={{ background: DOT_COLORS[a.action] ?? "var(--text-muted)" }}
+                />
                 <div style={{ flex: 1 }}>
                   <div className="audit-action">{a.action}</div>
-                  <div className="audit-meta">{a.meta}</div>
+                  <div className="audit-meta">
+                    {a.connection} · {a.scopesRequested.join(", ")}
+                    {a.errorCode ? ` · ${a.errorCode}` : ""}
+                  </div>
                 </div>
-                <div className="audit-time">{a.time}</div>
+                <div className="audit-time">{timeAgo(a.timestamp.toISOString())}</div>
               </div>
             ))}
           </CardBody>
@@ -158,16 +201,25 @@ export default function DashboardPage() {
             action={<Link href="/dashboard/threats" className="card-action">View all →</Link>}
           />
           <CardBody>
-            {THREATS.map((t, i) => (
-              <div className="threat-item" key={i}>
-                <div style={{ fontSize: "14px", marginTop: "1px" }}>⚠</div>
-                <div style={{ flex: 1 }}>
-                  <div className="threat-title">{t.title}</div>
-                  <div className="threat-desc">{t.desc}</div>
-                </div>
-                <div className="threat-time">{t.time}</div>
+            {threats.length === 0 ? (
+              <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "12px 0" }}>
+                No threats detected
               </div>
-            ))}
+            ) : (
+              threats.map((t) => (
+                <div className="threat-item" key={t.id}>
+                  <div style={{ fontSize: "14px", marginTop: "1px" }}>⚠</div>
+                  <div style={{ flex: 1 }}>
+                    <div className="threat-title">{t.action.replace(/_/g, " ")}</div>
+                    <div className="threat-desc">
+                      {t.connection} · {t.scopesRequested.join(", ")}
+                      {t.errorCode ? ` · ${t.errorCode}` : ""}
+                    </div>
+                  </div>
+                  <div className="threat-time">{timeAgo(t.timestamp.toISOString())}</div>
+                </div>
+              ))
+            )}
           </CardBody>
         </Card>
       </div>
