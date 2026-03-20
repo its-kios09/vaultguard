@@ -33,6 +33,7 @@ export default async function DashboardLayout({
             <Link href="/dashboard/policy" className="dash-nav-link">Scope Policy</Link>
             <Link href="/dashboard/audit" className="dash-nav-link">Audit Log</Link>
             <Link href="/dashboard/threats" className="dash-nav-link">Threats</Link>
+            <Link href="/dashboard/agent" className="dash-nav-link">Agent</Link>
           </div>
         </div>
 
