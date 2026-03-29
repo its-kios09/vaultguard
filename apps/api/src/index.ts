@@ -7,6 +7,7 @@ import tenantsRouter from './routes/tenants'
 import agentsRouter from './routes/agents'
 import policiesRouter from './routes/policies'
 import delegationsRouter from './routes/delegations'
+import auditRouter from './routes/audit'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -21,6 +22,7 @@ app.use('/tenants', tenantsRouter)
 app.use('/tenants/:id/agents', agentsRouter)
 app.use('/tenants/:id/policies', policiesRouter)
 app.use('/delegations', delegationsRouter)
+app.use('/audit', auditRouter)
 
 // Health
 app.get('/health', (_req, res) => {
