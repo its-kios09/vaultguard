@@ -6,6 +6,7 @@ import morgan from 'morgan'
 import tenantsRouter from './routes/tenants'
 import agentsRouter from './routes/agents'
 import policiesRouter from './routes/policies'
+import delegationsRouter from './routes/delegations'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -19,6 +20,7 @@ app.use(express.json())
 app.use('/tenants', tenantsRouter)
 app.use('/tenants/:id/agents', agentsRouter)
 app.use('/tenants/:id/policies', policiesRouter)
+app.use('/delegations', delegationsRouter)
 
 // Health
 app.get('/health', (_req, res) => {
