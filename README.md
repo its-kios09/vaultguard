@@ -73,13 +73,13 @@ Org A's HIMS Agent                    Org B's LMIS Platform
 ```
 vaultguard/
 ├── apps/
-│   ├── platform/
-│   └── api/
+│   ├── platform/          # React + TypeScript + Tailwind (broker dashboard)
+│   └── api/               # Express + Prisma + PostgreSQL (broker backend)
 ├── packages/
-│   └── sdk/
+│   └── sdk/               # vaultguard-sdk (npm publishable)
 └── examples/
-    ├── medicore-agent/
-    └── natsupply-agent/
+    ├── medicore-agent/     # MediCore HIMS agent (Org A)
+    └── natsupply-agent/    # NatSupply LMIS agent (Org B)
 ```
 
 ### Tech Stack
@@ -95,9 +95,9 @@ vaultguard/
 
 ---
 
-## The Demo Scenario
+## Examples
 
-VaultGuard ships with a realistic healthcare supply chain demo:
+VaultGuard ships with a realistic healthcare supply chain example:
 
 **MediCore HIMS** (Org A) — a hospital information management system that needs to push daily stock data and submit drug requisitions to a national supply platform.
 
@@ -131,7 +131,7 @@ const requisitionTool = guard.withDelegation({
 })(submitRequisitionTool)
 ```
 
-**Live demo outcomes:**
+**Live example outcomes:**
 - ✅ Stock data pushed — scoped token issued, audited
 - ⚡ Requisition submitted — NatSupply admin approves via consent popup
 - ❌ Admin endpoint access attempted — blocked by policy, logged
