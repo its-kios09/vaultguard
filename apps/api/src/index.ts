@@ -8,6 +8,7 @@ import agentsRouter from './routes/agents'
 import policiesRouter from './routes/policies'
 import delegationsRouter from './routes/delegations'
 import auditRouter from './routes/audit'
+import healthRouter from './routes/health'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -18,20 +19,12 @@ app.use(morgan('dev'))
 app.use(express.json())
 
 // Routes
+app.use('/health', healthRouter)
 app.use('/tenants', tenantsRouter)
 app.use('/tenants/:id/agents', agentsRouter)
 app.use('/tenants/:id/policies', policiesRouter)
 app.use('/delegations', delegationsRouter)
 app.use('/audit', auditRouter)
-
-// Health
-app.get('/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'vaultguard-api',
-    timestamp: new Date().toISOString(),
-  })
-})
 
 app.listen(PORT, () => {
   console.log(`⚡ VaultGuard API running on http://localhost:${PORT}`)
