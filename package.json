@@ -1,0 +1,19 @@
+{
+  "name": "vaultguard",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "build": "pnpm --recursive build",
+    "lint": "pnpm --recursive lint",
+    "format": "prettier --write '**/*.{ts,tsx,json,md}'"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}
