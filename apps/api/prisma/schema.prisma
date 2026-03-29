@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agents      Agent[]
+  policies    Policy[]
+  auditLogs   AuditLog[]
+  delegations Delegation[] @relation("RequestingTenant")
+  receivingDelegations Delegation[] @relation("ReceivingTenant")
+}
+
+model Agent {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  tenantId     String
+  clientId     String   @unique
+  clientSecret String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  delegations  Delegation[]
+}
+
+model Policy {
+  id             String       @id @default(cuid())
+  tenantId       String
+  action         String
+  effect         PolicyEffect
+  requireStepUp  Boolean      @default(false)
+  ttlSeconds     Int          @default(3600)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, action])
+}
+
+model Delegation {
+  id                 String           @id @default(cuid())
+  requestingTenantId String
+  receivingTenantId  String
+  agentId            String
+  action             String
+  status             DelegationStatus @default(PENDING)
+  token              String?
+  expiresAt          DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  requestingTenant   Tenant   @relation("RequestingTenant", fields: [requestingTenantId], references: [id])
+  receivingTenant    Tenant   @relation("ReceivingTenant", fields: [receivingTenantId], references: [id])
+  agent              Agent    @relation(fields: [agentId], references: [id])
+  auditLogs          AuditLog[]
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  tenantId     String
+  delegationId String?
+  action       String
+  status       String
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  tenant       Tenant      @relation(fields: [tenantId], references: [id])
+  delegation   Delegation? @relation(fields: [delegationId], references: [id])
+}
+
+enum PolicyEffect {
+  ALLOW
+  BLOCK
+  STEP_UP
+}
+
+enum DelegationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVOKED
+  EXPIRED
+}
