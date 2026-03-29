@@ -1,19 +1,21 @@
 import { Router, Request, Response } from 'express'
 import { z } from 'zod'
-import { randomBytes } from 'crypto'
 import { prisma } from '../lib/prisma'
 import { validate } from '../middleware/validate'
+import { getAgentToken } from '../lib/auth0'
 
 const router = Router({ mergeParams: true })
 
 const createSchema = z.object({
   name: z.string().min(2).max(100),
   description: z.string().max(500).optional(),
+  clientId: z.string().min(1),
+  clientSecret: z.string().min(1),
 })
 
-const generateCredentials = () => ({
-  clientId: `agent_${randomBytes(12).toString('hex')}`,
-  clientSecret: randomBytes(32).toString('hex'),
+const updateSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  description: z.string().max(500).optional(),
 })
 
 // POST /tenants/:id/agents
@@ -25,15 +27,27 @@ router.post('/', validate(createSchema), async (req: Request, res: Response) => 
       return
     }
 
-    const { clientId, clientSecret } = generateCredentials()
+    const existing = await prisma.agent.findUnique({ where: { clientId: req.body.clientId } })
+    if (existing) {
+      res.status(409).json({ error: 'Agent with this clientId already exists' })
+      return
+    }
+
+    // Verify the credentials work against Auth0 before saving
+    try {
+      await getAgentToken(req.body.clientId, req.body.clientSecret)
+    } catch {
+      res.status(400).json({ error: 'Invalid Auth0 credentials — could not obtain token' })
+      return
+    }
 
     const agent = await prisma.agent.create({
       data: {
         name: req.body.name,
         description: req.body.description,
         tenantId: req.params.id,
-        clientId,
-        clientSecret,
+        clientId: req.body.clientId,
+        clientSecret: req.body.clientSecret,
       },
     })
 
@@ -46,13 +60,16 @@ router.post('/', validate(createSchema), async (req: Request, res: Response) => 
       },
     })
 
-    // Return secret only on creation — never again
     res.status(201).json({
       data: {
-        ...agent,
-        clientSecret,
+        id: agent.id,
+        name: agent.name,
+        description: agent.description,
+        clientId: agent.clientId,
+        tenantId: agent.tenantId,
+        createdAt: agent.createdAt,
       },
-      warning: 'Store the clientSecret securely — it will not be shown again',
+      message: 'Agent registered successfully with Auth0 credentials verified',
     })
   } catch (error) {
     res.status(500).json({ error: 'Failed to create agent' })
@@ -78,7 +95,6 @@ router.get('/', async (req: Request, res: Response) => {
         tenantId: true,
         createdAt: true,
         updatedAt: true,
-        // Never return clientSecret in list
       },
     })
 
@@ -129,11 +145,19 @@ router.post('/:agentId/rotate-secret', async (req: Request, res: Response) => {
       return
     }
 
-    const newSecret = randomBytes(32).toString('hex')
+    const { clientSecret } = z.object({ clientSecret: z.string().min(1) }).parse(req.body)
+
+    // Verify new secret works
+    try {
+      await getAgentToken(agent.clientId, clientSecret)
+    } catch {
+      res.status(400).json({ error: 'Invalid new secret — could not obtain Auth0 token' })
+      return
+    }
 
     await prisma.agent.update({
       where: { id: req.params.agentId },
-      data: { clientSecret: newSecret },
+      data: { clientSecret },
     })
 
     await prisma.auditLog.create({
@@ -145,10 +169,7 @@ router.post('/:agentId/rotate-secret', async (req: Request, res: Response) => {
       },
     })
 
-    res.json({
-      data: { clientSecret: newSecret },
-      warning: 'Store the new clientSecret securely — it will not be shown again',
-    })
+    res.json({ message: 'Agent secret updated and verified successfully' })
   } catch (error) {
     res.status(500).json({ error: 'Failed to rotate secret' })
   }
