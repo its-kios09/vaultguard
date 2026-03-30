@@ -1,10 +1,10 @@
-import { Router, Request, Response } from 'express'
+import { Router, IRouter, Request, Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { validate } from '../middleware/validate'
 import { getAgentToken } from '../lib/auth0'
 
-const router = Router()
+const router: IRouter = Router()
 
 const requestSchema = z.object({
   requestingTenantId: z.string().min(1),

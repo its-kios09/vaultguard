@@ -1,9 +1,9 @@
-import { Router, Request, Response } from 'express'
+import { Router, IRouter, Request, Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { validate } from '../middleware/validate'
 
-const router = Router()
+const router: IRouter = Router()
 
 const registerSchema = z.object({
   name: z.string().min(2).max(100),

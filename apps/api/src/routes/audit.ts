@@ -1,7 +1,7 @@
-import { Router, Request, Response } from 'express'
+import { Router, IRouter, Request, Response } from 'express'
 import { prisma } from '../lib/prisma'
 
-const router = Router()
+const router: IRouter = Router()
 
 // GET /audit?tenantId=xxx&action=xxx&status=xxx&limit=xxx
 router.get('/', async (req: Request, res: Response) => {

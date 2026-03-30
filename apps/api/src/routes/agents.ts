@@ -1,10 +1,10 @@
-import { Router, Request, Response } from 'express'
+import { Router, IRouter, Request, Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { validate } from '../middleware/validate'
 import { getAgentToken } from '../lib/auth0'
 
-const router = Router({ mergeParams: true })
+const router: IRouter = Router({ mergeParams: true })
 
 const createSchema = z.object({
   name: z.string().min(2).max(100),

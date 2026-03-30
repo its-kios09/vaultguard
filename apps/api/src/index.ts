@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import express from 'express'
+import express, { Express } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
@@ -9,8 +9,9 @@ import policiesRouter from './routes/policies'
 import delegationsRouter from './routes/delegations'
 import auditRouter from './routes/audit'
 import healthRouter from './routes/health'
+import verifyRouter from './routes/verify'
 
-const app = express()
+const app: Express = express()
 const PORT = process.env.PORT || 3001
 
 app.use(helmet())
@@ -18,12 +19,12 @@ app.use(cors())
 app.use(morgan('dev'))
 app.use(express.json())
 
-// Routes
 app.use('/health', healthRouter)
 app.use('/tenants', tenantsRouter)
 app.use('/tenants/:id/agents', agentsRouter)
 app.use('/tenants/:id/policies', policiesRouter)
 app.use('/delegations', delegationsRouter)
+app.use('/delegations', verifyRouter)
 app.use('/audit', auditRouter)
 
 app.listen(PORT, () => {
