@@ -10,6 +10,7 @@ import delegationsRouter from './routes/delegations'
 import auditRouter from './routes/audit'
 import healthRouter from './routes/health'
 import verifyRouter from './routes/verify'
+import stepupRouter from './routes/stepup'
 
 const app: Express = express()
 const PORT = process.env.PORT || 3001
@@ -25,6 +26,7 @@ app.use('/tenants/:id/agents', agentsRouter)
 app.use('/tenants/:id/policies', policiesRouter)
 app.use('/delegations', delegationsRouter)
 app.use('/delegations', verifyRouter)
+app.use('/stepup', stepupRouter)
 app.use('/audit', auditRouter)
 
 app.listen(PORT, () => {
