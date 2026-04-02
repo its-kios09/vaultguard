@@ -12,13 +12,14 @@ model Tenant {
   name        String
   slug        String   @unique
   description String?
+  auth0UserId String?  @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  agents      Agent[]
-  policies    Policy[]
-  auditLogs   AuditLog[]
-  delegations Delegation[] @relation("RequestingTenant")
+  agents               Agent[]
+  policies             Policy[]
+  auditLogs            AuditLog[]
+  delegations          Delegation[] @relation("RequestingTenant")
   receivingDelegations Delegation[] @relation("ReceivingTenant")
 }
 
@@ -32,21 +33,21 @@ model Agent {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  delegations  Delegation[]
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  delegations Delegation[]
 }
 
 model Policy {
-  id             String       @id @default(cuid())
-  tenantId       String
-  action         String
-  effect         PolicyEffect
-  requireStepUp  Boolean      @default(false)
-  ttlSeconds     Int          @default(3600)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id            String       @id @default(cuid())
+  tenantId      String
+  action        String
+  effect        PolicyEffect
+  requireStepUp Boolean      @default(false)
+  ttlSeconds    Int          @default(3600)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, action])
 }
@@ -63,10 +64,10 @@ model Delegation {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
-  requestingTenant   Tenant   @relation("RequestingTenant", fields: [requestingTenantId], references: [id])
-  receivingTenant    Tenant   @relation("ReceivingTenant", fields: [receivingTenantId], references: [id])
-  agent              Agent    @relation(fields: [agentId], references: [id])
-  auditLogs          AuditLog[]
+  requestingTenant Tenant     @relation("RequestingTenant", fields: [requestingTenantId], references: [id])
+  receivingTenant  Tenant     @relation("ReceivingTenant", fields: [receivingTenantId], references: [id])
+  agent            Agent      @relation(fields: [agentId], references: [id])
+  auditLogs        AuditLog[]
 }
 
 model AuditLog {
@@ -78,8 +79,8 @@ model AuditLog {
   metadata     Json?
   createdAt    DateTime @default(now())
 
-  tenant       Tenant      @relation(fields: [tenantId], references: [id])
-  delegation   Delegation? @relation(fields: [delegationId], references: [id])
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  delegation Delegation? @relation(fields: [delegationId], references: [id])
 }
 
 enum PolicyEffect {
