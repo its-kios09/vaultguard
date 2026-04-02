@@ -1,0 +1,19 @@
+{
+  "name": "vaultguard-sdk",
+  "version": "0.1.0",
+  "description": "SDK for agent-to-agent authorization via VaultGuard",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["auth0", "agent", "delegation", "token-vault", "vaultguard"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "axios": "^1.14.0"
+  }
+}

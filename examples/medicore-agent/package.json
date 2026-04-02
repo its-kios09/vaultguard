@@ -1,0 +1,19 @@
+{
+  "name": "medicore-agent",
+  "version": "0.1.0",
+  "description": "MediCore HIMS AI Agent — VaultGuard + Auth0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "demo": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "ai": "^4.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "axios": "^1.14.0",
+    "dotenv": "^16.0.0",
+    "zod": "^3.22.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.4"
+  }
+}
