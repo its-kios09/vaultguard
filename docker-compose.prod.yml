@@ -38,7 +38,7 @@ services:
       NATSUPPLY_CLIENT_SECRET: DAjnekthKNPc0vgxxHzUnsWlYXHzn_aspXxBd76C5Ic1mo3k2DtdrM9qnPFbSCUe
       GOOGLE_CLIENT_ID: 884645223870-1hk0vov05pddl4jlinn9198hgd7cvmt2.apps.googleusercontent.com
       GOOGLE_CLIENT_SECRET: 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
-      ALLOWED_ORIGINS: http://146.190.74.13,http://146.190.74.13:5173
+      ALLOWED_ORIGINS: http://146.190.74.13,http://146.190.74.13:5173,https://filing-ringtone-joined-rendered.trycloudflare.com
       NODE_ENV: production
     depends_on:
       postgres:
