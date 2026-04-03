@@ -17,3 +17,6 @@ Thumbs.db
 *.swp
 *.swo
 pnpm-lock.yaml
+.env.prod
+examples/medicore-agent/.env
+examples/natsupply-agent/.env

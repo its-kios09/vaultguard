@@ -25,21 +25,8 @@ services:
     restart: always
     ports:
       - "3001:3001"
-    environment:
-      DATABASE_URL: postgresql://vaultguard:vaultguard_prod_2026@postgres:5432/vaultguard
-      PORT: 3001
-      AUTH0_DOMAIN: dev-e4jfj18ze4bq2ych.us.auth0.com
-      AUTH0_AUDIENCE: https://api.vaultguard.dev
-      AUTH0_CLIENT_ID: bxukFyM5kgpKhJATInEE7GgRliEqjhnO
-      AUTH0_PLATFORM_CLIENT_SECRET: 6D8nyVPygFjF2u38XnpTUDowfA7qE0KiLG03tOl_YjRki9zigRataNT7P_4DddqK
-      MEDICORE_CLIENT_ID: jnXcMRculsY4EvreYYJJhHbLCkL3DKnY
-      MEDICORE_CLIENT_SECRET: mzkytNV6TH6gLtHOkYguv4CVNUWwEH8j2-pdcaEFOkcF3Gygx3AHjND4nLKTVy91
-      NATSUPPLY_CLIENT_ID: Wq6fFwhENwLAx1qtOaRy1sNMwqf9vTXA
-      NATSUPPLY_CLIENT_SECRET: DAjnekthKNPc0vgxxHzUnsWlYXHzn_aspXxBd76C5Ic1mo3k2DtdrM9qnPFbSCUe
-      GOOGLE_CLIENT_ID: 884645223870-1hk0vov05pddl4jlinn9198hgd7cvmt2.apps.googleusercontent.com
-      GOOGLE_CLIENT_SECRET: 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
-      ALLOWED_ORIGINS: http://localhost:5173,https://euros-patrick-determines-zoo.trycloudflare.com,https://discovered-soundtrack-essence-charity.trycloudflare.com
-      NODE_ENV: production
+    env_file:
+      - .env.prod
     depends_on:
       postgres:
         condition: service_healthy
