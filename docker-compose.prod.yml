@@ -52,7 +52,7 @@ services:
         VITE_API_URL: http://146.190.74.13:3001
         VITE_AUTH0_DOMAIN: dev-e4jfj18ze4bq2ych.us.auth0.com
         VITE_AUTH0_CLIENT_ID: CArS28cUyjpNZF8F38QWEE6BWCqVIWwO
-        VITE_AUTH0_REDIRECT_URI: http://146.190.74.13:5173/callback
+        VITE_AUTH0_REDIRECT_URI: https://level-tue-require-checklist.trycloudflare.com/callback
     container_name: vaultguard-platform
     restart: always
     ports:
