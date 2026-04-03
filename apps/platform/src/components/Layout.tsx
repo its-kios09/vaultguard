@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth0 } from '@auth0/auth0-react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { Users, FileText, GitBranch, BarChart3, BookOpen, LogOut, Activity } from 'lucide-react'

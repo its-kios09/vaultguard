@@ -6,7 +6,7 @@ export const api = axios.create({
 })
 
 // Tenants
-export const registerTenant = (data: { name: string; slug: string; description?: string }) =>
+export const registerTenant = (data: { name: string; slug: string; description?: string; auth0UserId?: string }) =>
   api.post('/tenants/register', data).then((r) => r.data)
 
 export const getTenant = (id: string) =>
