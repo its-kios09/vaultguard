@@ -4,6 +4,7 @@ import 'dotenv/config'
 const http = axios.create({
   baseURL: process.env.VAULTGUARD_API_URL || 'http://localhost:3001',
   headers: { 'Content-Type': 'application/json' },
+  validateStatus: () => true,
 })
 
 export async function requestDelegation(action: string) {
@@ -13,6 +14,9 @@ export async function requestDelegation(action: string) {
     agentId: process.env.MEDICORE_AGENT_ID,
     action,
   })
+  if (res.status === 403) {
+    return { status: 'BLOCKED', delegationId: res.data?.delegationId, reason: res.data?.reason }
+  }
   return res.data
 }
 

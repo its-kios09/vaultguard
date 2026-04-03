@@ -8,12 +8,14 @@
     "demo": "tsx src/index.ts"
   },
   "dependencies": {
-    "ai": "^4.0.0",
-    "@ai-sdk/openai": "^1.0.0",
+    "@ai-sdk/anthropic": "^3.0.66",
+    "@ai-sdk/google": "^3.0.56",
+    "@anthropic-ai/sdk": "^0.82.0",
+    "ai": "^6.0.144",
     "axios": "^1.14.0",
     "dotenv": "^16.0.0",
-    "zod": "^3.22.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "zod": "^3.22.0"
   }
 }
